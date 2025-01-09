@@ -4,6 +4,8 @@ from argparse import ArgumentParser
 table_pat = re.compile(r"DropsLine\|name=([^|]+)\|quantity=(\d+)\|rarity=(\d+)/(\d+)")
 dose_pat = re.compile(r".+\((\d)\)")
 rune_pat = re.compile(r"(.+)\Wrune")
+herb_pat = re.compile(r"HerbDropLines\|(\d+)/(\d+)")
+rdt_pat = re.compile(r"GemDropTable\|(\d+)/(\d+)")
 
 name_remap = {
     "Bronze bolts (p)": "bolt_p",
@@ -46,8 +48,23 @@ def _parse_file(path):
         for line in lines:
             resp = re.findall(table_pat, line)
             if len(resp) == 0:
-                continue
-            obj_name, quantity, rarity, base = resp[0]
+                print(line)
+                resp = re.findall(herb_pat, line)
+                print(resp)
+                if len(resp) == 0:
+                    resp = re.findall(rdt_pat, line)
+                    if len(resp) == 0:
+                        continue
+                    else:
+                        obj_name = "~randomjewel"
+                        quantity = -1
+                        rarity = resp[0][0]
+                else:
+                    obj_name = "~randomherb"
+                    quantity = -1
+                    rarity = resp[0][0]
+            else:
+                obj_name, quantity, rarity, base = resp[0]
             if overall_base is None:
                 overall_base = base
             elif base != overall_base:
@@ -68,7 +85,10 @@ def _generate_output(offset, weight, name, quantity):
         new_offset = offset + int(weight)
         resp = f" else if ($random < {new_offset}) "
     resp += "{\n"
-    resp += f"    obj_add(npc_coord, {name}, {quantity}, ^lootdrop_duration);\n"
+    if (quantity == -1):
+        resp += f"    obj_add(npc_coord, {name}, ^lootdrop_duration);\n"
+    else:
+        resp += f"    obj_add(npc_coord, {name}, {quantity}, ^lootdrop_duration);\n"
     resp += "}"
 
     return resp, int(new_offset)
