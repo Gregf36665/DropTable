@@ -48,9 +48,7 @@ def _parse_file(path):
         for line in lines:
             resp = re.findall(table_pat, line)
             if len(resp) == 0:
-                print(line)
                 resp = re.findall(herb_pat, line)
-                print(resp)
                 if len(resp) == 0:
                     resp = re.findall(rdt_pat, line)
                     if len(resp) == 0:
